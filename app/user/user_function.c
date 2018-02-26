@@ -4,106 +4,201 @@
 #include "mem.h"
 #include "user_interface.h"
 
+#include "espconn.h"
+
 #include "user_function.h"
 #include "user_setting.h"
 #include "user_pwm.h"
 
 /*
- * 掉电读写设置参数
- * 修改设置后保存设置,上电后读取设置参数
+ * 通用函数
+ * tcp udp接收数据后的处理函数
  */
 
-void ICACHE_FLASH_ATTR
-user_setting_init(void) {
+const char *device_find_request = "Device Report!!";
 
-//	os_printf("PWM MAX ADDR:%d\r\n", SETTING_SAVE_PWM_MAX_ADDR);
-//	os_printf("PWM MIN ADDR:%d\r\n", SETTING_SAVE_PWM_MIN_ADDR);
-//	os_printf("PWM MIDDLE ADDR:%d\r\n", SETTING_SAVE_PWM_MIDDLE_ADDR);
-
-//		int i;
-//		unsigned char temp[4] = { 0,0,0,0 };
-//		for (i = 0; i < 4096; i+=4) {
-//			if (i % 16 == 0)
-//				os_printf("\r\n%02x:", i / 16);
-//			spi_flash_read(i+0x1000 , (uint32 *) &temp, 4);
-//			os_printf("%02x %02x %02x %02x   ", temp[0], temp[1], temp[2], temp[3]);
-//		}
-
-
-	user_setting_get_pwm_max();
-	user_setting_get_pwm_min();
-	user_setting_get_pwm_middle();
-	user_setting_get_pwm_middle_delay();
-
-	os_printf("PWM MAX:%d\r\n", pwm_max);
-	os_printf("PWM MIN:%d\r\n", pwm_min);
-	os_printf("PWM MIDDLE:%d\r\n", pwm_middle);
-	os_printf("PWM DELAY:%d\r\n", rudder_middle_delay);
-
-
-}
+const char *device_find_response_ok = "I'm button:";
+const char *setting_pwm_max = "rudder_max=";
+const char *setting_pwm_min = "rudder_min=";
+const char *setting_pwm_middle = "rudder_middle=";
+const char *setting_pwm_middle_delay = "rudder_delay=";
+const char *setting_pwm_test = "rudder_pwm_test=";
+const char *setting_get_all = "get all setting";
+const char *setting_update = "update";
 
 void ICACHE_FLASH_ATTR
-user_setting_set_pwm_max(uint32 val) {
-	pwm_max=val;
-	spi_flash_erase_sector(SETTING_SAVE_PWM_MAX_ADDR);
-	spi_flash_write(SETTING_SAVE_PWM_MAX_ADDR * 4096, &pwm_max, 4);
-}
+user_con_received(void *arg, char *pusrdata, unsigned short length) {
+	if (length == 1 && *pusrdata == 127)
+		return;
 
-void ICACHE_FLASH_ATTR
-user_setting_set_pwm_min(uint32 val) {
-	pwm_min=val;
-	spi_flash_erase_sector(SETTING_SAVE_PWM_MIN_ADDR);
-	spi_flash_write(SETTING_SAVE_PWM_MIN_ADDR * 4096, &pwm_min, 4);
-}
+	struct espconn *pesp_conn = arg;
 
-void ICACHE_FLASH_ATTR
-user_setting_set_pwm_middle(uint32 val) {
-	pwm_middle=val;
-	spi_flash_erase_sector(SETTING_SAVE_PWM_MIDDLE_ADDR);
-	spi_flash_write(SETTING_SAVE_PWM_MIDDLE_ADDR * 4096, &pwm_middle, 4);
-}
+	int i, j, k;
+	char DeviceBuffer[40] = { 0 };
 
-void ICACHE_FLASH_ATTR
-user_setting_set_pwm_middle_delay(uint32 val) {
-	rudder_middle_delay=val;
-	spi_flash_erase_sector(SETTING_SAVE_PWM_MIDDLE_DELAY_ADDR);
-	spi_flash_write(SETTING_SAVE_PWM_MIDDLE_DELAY_ADDR * 4096, &rudder_middle_delay, 4);
-}
+	os_sprintf(DeviceBuffer, "result:%s\n", pusrdata);
 
-uint32 ICACHE_FLASH_ATTR
-user_setting_get_pwm_max(void) {
-	spi_flash_read(SETTING_SAVE_PWM_MAX_ADDR * 4096, &pwm_max, 4);
-	if (pwm_max > PWM_MAX_CYCLE || pwm_max < PWM_MIN_CYCLE || pwm_max < pwm_min) {
-		pwm_max = PWM_MAX_CYCLE;
+	if (pesp_conn->type == ESPCONN_TCP) { //tcp
+		//espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	} else if (pesp_conn->type == ESPCONN_UDP) {		//udp
+		remot_info *premot = NULL;
+		if (espconn_get_connection_info(pesp_conn, &premot, 0) != ESPCONN_OK)
+			return;
+		pesp_conn->proto.tcp->remote_port = premot->remote_port;	//获取端口
+		pesp_conn->proto.tcp->remote_ip[0] = premot->remote_ip[0];	//获取IP地址
+		pesp_conn->proto.tcp->remote_ip[1] = premot->remote_ip[1];
+		pesp_conn->proto.tcp->remote_ip[2] = premot->remote_ip[2];
+		pesp_conn->proto.tcp->remote_ip[3] = premot->remote_ip[3];
+		//espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));	//发送数据
 	}
-	return pwm_max;
-}
 
-uint32 ICACHE_FLASH_ATTR
-user_setting_get_pwm_min(void) {
-	spi_flash_read(SETTING_SAVE_PWM_MIN_ADDR * 4096, &pwm_min, 4);
+	if (length == os_strlen(device_find_request) &&
+	os_strncmp(pusrdata, device_find_request, os_strlen(device_find_request)) == 0) {
 
-	if (pwm_min > PWM_MAX_CYCLE || pwm_min < PWM_MIN_CYCLE || pwm_min > pwm_max) {
-		pwm_min = PWM_MIN_CYCLE;
+		char Device_mac_buffer[60] = { 0 };
+		char hwaddr[6];
+		struct ip_info ipconfig;
+
+		wifi_get_ip_info(STATION_IF, &ipconfig);
+		wifi_get_macaddr(STATION_IF, hwaddr);
+
+		os_sprintf(DeviceBuffer, "%s" MACSTR "," IPSTR, device_find_response_ok, MAC2STR(hwaddr), IP2STR(&ipconfig.ip));
+		os_printf("%s\n", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	}  else if (length == 1 && *pusrdata == '+') {
+		user_rudder_press(1);
+	} else if (length == 1 && *pusrdata == '-') {
+		user_rudder_press(0);
+	} else if (length == os_strlen(setting_update)
+			&& os_strncmp(pusrdata, setting_update, os_strlen(setting_update)) == 0) {
+		os_printf("\nupdate\n");
+		os_printf("user bin:%d\n", system_upgrade_userbin_check());
+		user_update();
+	} else if (length == os_strlen(setting_get_all)
+			&& os_strncmp(pusrdata, setting_get_all, os_strlen(setting_get_all)) == 0) {
+
+		i = (pwm_max - PWM_MIN_CYCLE + 1) / 10.5;
+		j = (pwm_min - PWM_MIN_CYCLE + 1) / 10.5;
+		k = (pwm_middle - PWM_MIN_CYCLE + 1) / 10.5;
+		int l= rudder_middle_delay;
+		os_sprintf(DeviceBuffer, "%s%03d\n%s%03d\n%s%03d\n%s%03d\n", setting_pwm_max, i, setting_pwm_min, j,
+				setting_pwm_middle, k, setting_pwm_middle_delay, l);
+
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	} else if (length == (os_strlen(setting_pwm_max) + 3)
+			&& os_strncmp(pusrdata, setting_pwm_max, os_strlen(setting_pwm_max)) == 0) {
+		k = 0;
+		for (i = 0; i < 3; i++) {
+			j = *(pusrdata + os_strlen(setting_pwm_max) + i) - 0x30;
+			if (j >= 0 && j <= 9)
+				k = k * 10 + j;
+			else {
+				k = -1;
+				break;
+			}
+		}
+		if (k >= 0) {
+			if (k >= 0 && k <= 180) {
+				user_set_led(0);
+				user_setting_set_pwm_max(k * 10 + k / 2 + PWM_MIN_CYCLE);
+				user_set_led(1);
+			}
+//			os_printf("pwm_max:%d\n", pwm_max);
+		}
+		k = (pwm_max - PWM_MIN_CYCLE + 1) / 10.5;
+		os_sprintf(DeviceBuffer, "%s" "%03d\n", setting_pwm_max, k);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+
+	} else if (length == (os_strlen(setting_pwm_min) + 3)
+			&& os_strncmp(pusrdata, setting_pwm_min, os_strlen(setting_pwm_min)) == 0) {
+		k = 0;
+		for (i = 0; i < 3; i++) {
+			j = *(pusrdata + os_strlen(setting_pwm_min) + i) - 0x30;
+			if (j >= 0 && j <= 9)
+				k = k * 10 + j;
+			else {
+				k = -1;
+				break;
+			}
+		}
+		if (k >= 0) {
+			if (k >= 0 && k <= 180) {
+				user_set_led(0);
+				user_setting_set_pwm_min(k * 10 + k / 2 + PWM_MIN_CYCLE);
+				user_set_led(1);
+			}
+//			os_printf("pwm_min:%d\n", pwm_min);
+		}
+		k = (pwm_min - PWM_MIN_CYCLE + 1) / 10.5;
+		os_sprintf(DeviceBuffer, "%s" "%03d\n", setting_pwm_min, k);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+
+	} else if (length == (os_strlen(setting_pwm_middle) + 3) && os_strncmp(pusrdata, setting_pwm_middle,
+	os_strlen(setting_pwm_middle)) == 0) {
+		k = 0;
+		for (i = 0; i < 3; i++) {
+			j = *(pusrdata + os_strlen(setting_pwm_middle) + i) - 0x30;
+			if (j >= 0 && j <= 9)
+				k = k * 10 + j;
+			else {
+				k = -1;
+				break;
+			}
+		}
+		if (k >= 0) {
+			if (k >= 0 && k <= 180) {
+				user_set_led(0);
+				user_setting_set_pwm_middle(k * 10 + k / 2 + PWM_MIN_CYCLE);
+				user_set_led(1);
+			}
+//			os_printf("pwm_min:%d\n", pwm_middle);
+		}
+		k = (pwm_middle - PWM_MIN_CYCLE + 1) / 10.5;
+		os_sprintf(DeviceBuffer, "%s" "%03d\n", setting_pwm_middle, k);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+
+	} else if (length == (os_strlen(setting_pwm_test) + 3) && os_strncmp(pusrdata, setting_pwm_test,
+	os_strlen(setting_pwm_test)) == 0) {
+		k = 0;
+		for (i = 0; i < 3; i++) {
+			j = *(pusrdata + os_strlen(setting_pwm_test) + i) - 0x30;
+			if (j >= 0 && j <= 9)
+				k = k * 10 + j;
+			else {
+				k = -1;
+				break;
+			}
+		}
+		if (k >= 0 && k <= 180) {
+			user_rudder_test(k * 10 + k / 2 + PWM_MIN_CYCLE);
+			os_printf("pwm_test:%d\n", k * 10 + k / 2 + PWM_MIN_CYCLE);
+		}
+	} else if (length == (os_strlen(setting_pwm_middle_delay) + 3)
+			&& os_strncmp(pusrdata, setting_pwm_middle_delay, os_strlen(setting_pwm_middle_delay)) == 0) {
+		k = 0;
+		for (i = 0; i < 3; i++) {
+			j = *(pusrdata + os_strlen(setting_pwm_middle_delay) + i) - 0x30;
+			if (j >= 0 && j <= 9)
+				k = k * 10 + j;
+			else {
+				k = -1;
+				break;
+			}
+		}
+		if (k >= 0) {
+			user_set_led(0);
+			user_setting_set_pwm_middle_delay(k);
+			user_set_led(1);
+//			os_printf("pwm_delay:%d\n", rudder_middle_delay);
+		}
+		os_sprintf(DeviceBuffer, "%s" "%03d\n", setting_pwm_middle_delay, rudder_middle_delay);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+
 	}
-	return pwm_min;
-}
 
-uint32 ICACHE_FLASH_ATTR
-user_setting_get_pwm_middle(void) {
-	spi_flash_read(SETTING_SAVE_PWM_MIDDLE_ADDR * 4096, &pwm_middle, 4);
-
-	if (pwm_middle > PWM_MAX_CYCLE || pwm_middle < PWM_MIN_CYCLE) {
-		pwm_middle = (PWM_MAX_CYCLE + PWM_MIN_CYCLE) / 2;
-	}
-	return pwm_middle;
-}
-
-uint32 ICACHE_FLASH_ATTR
-user_setting_get_pwm_middle_delay(void) {
-	spi_flash_read(SETTING_SAVE_PWM_MIDDLE_DELAY_ADDR * 4096, &rudder_middle_delay, 4);
-	if(rudder_middle_delay>999) rudder_middle_delay=500;
-
-	return rudder_middle_delay;
 }

@@ -22,4 +22,4 @@
  ../../include/ip_addr.h ../../include/queue.h ../../include/spi_flash.h \
  ../../include/espconn.h ../include/user_webserver.h \
  ../../include/upgrade.h ../include/user_devicefind.h \
- ../include/user_pwm.h ../../include/pwm.h
+ ../include/user_pwm.h ../../include/pwm.h ../include/user_function.h

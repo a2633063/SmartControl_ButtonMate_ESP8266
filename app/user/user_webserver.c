@@ -21,6 +21,7 @@
 
 #include "user_devicefind.h"
 #include "user_pwm.h"
+#include "user_function.h"
 
 uint8 *web_http =
 		"HTTP/1.1 200 OK\n"
