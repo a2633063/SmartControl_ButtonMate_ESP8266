@@ -12,9 +12,9 @@ extern uint32 pwm_min;		//舵机最小角度
 extern uint32 rudder_middle_delay;		//舵机最小角度
 
 /*Definition of GPIO PIN params, for GPIO initialization*/
-#define PWM_0_OUT_IO_MUX PERIPHS_IO_MUX_GPIO4_U
-#define PWM_0_OUT_IO_NUM 4
-#define PWM_0_OUT_IO_FUNC  FUNC_GPIO4
+#define PWM_0_OUT_IO_MUX PERIPHS_IO_MUX_MTCK_U
+#define PWM_0_OUT_IO_NUM 13
+#define PWM_0_OUT_IO_FUNC  FUNC_GPIO13
 
 
 uint32 user_pwm_get_duty(void);
