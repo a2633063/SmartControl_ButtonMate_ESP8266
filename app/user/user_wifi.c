@@ -7,6 +7,7 @@
 #include "smartconfig.h"
 #include "user_wifi.h"
 
+#include "user_mqtt.h"
 #include "../include/espconn.h"
 
 /*
@@ -51,7 +52,7 @@ void wifi_handle_event_cb(System_Event_t *evt) {
 //		os_printf("\n");
 		wifi_status_led_uninstall();
 		user_set_led(1);
-
+		user_mqtt_connect();//连接MQTT服务器
 //		user_mdns_config();
 
 		break;
@@ -62,6 +63,7 @@ void wifi_handle_event_cb(System_Event_t *evt) {
 	case EVENT_SOFTAPMODE_STADISCONNECTED:
 		os_printf("wifi station: " MACSTR "leave, AID = %d\n", MAC2STR(evt->event_info.sta_disconnected.mac),
 				evt->event_info.sta_disconnected.aid);
+		user_mqtt_disconnect();//连接MQTT服务器
 		break;
 	default:
 		break;
@@ -114,6 +116,8 @@ smartconfig_done(sc_status status, void *pdata) {
 
 void ICACHE_FLASH_ATTR user_wifi_init(void) {
 
+
+	user_mqtt_init();
 	//设置为station模式
 	if (wifi_get_opmode() != STATION_MODE || wifi_get_opmode_default() != STATION_MODE) {
 		wifi_set_opmode(STATION_MODE);
@@ -126,6 +130,8 @@ void ICACHE_FLASH_ATTR user_wifi_init(void) {
 	}
 	wifi_set_event_handler_cb(wifi_handle_event_cb);
 	wifi_status_led_install(GPIO_WIFI_LED_IO_NUM, GPIO_WIFI_LED_IO_MUX, GPIO_WIFI_LED_IO_FUNC);
+
+
 }
 
 void ICACHE_FLASH_ATTR user_smartconfig(void) {
