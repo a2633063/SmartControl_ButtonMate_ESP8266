@@ -1,3 +1,5 @@
 *.o
 .output
 *.d
+/app/user/.output
+/app/.output
