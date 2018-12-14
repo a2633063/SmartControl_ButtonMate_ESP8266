@@ -69,10 +69,14 @@ void ICACHE_FLASH_ATTR user_mqtt_disconnect(void) {
 void ICACHE_FLASH_ATTR user_mqtt_init(void) {
 
 	//MQTT≥ı ºªØ
+	uint8_t * ip = (uint8_t*)os_zalloc(16);
+	os_memset(ip,0,16);
+	os_sprintf(ip, "%d.%d.%d.%d", mqtt_ip[0], mqtt_ip[1], mqtt_ip[2], mqtt_ip[3]);
 
-    MQTT_InitConnection(&mqttClient, "192.168.43.247", mqtt_port, NO_TLS);
+    MQTT_InitConnection(&mqttClient, ip, mqtt_port, NO_TLS);
+    os_free(ip);
 
-    MQTT_InitClient(&mqttClient, "Device_ID", mqtt_user, mqtt_password, MQTT_KEEPALIVE, 1);
+    MQTT_InitClient(&mqttClient, mqtt_device_id, mqtt_user, mqtt_password, MQTT_KEEPALIVE, 1);
 
     MQTT_InitLWT(&mqttClient, "/lwt", "offline", 0, 0);
     MQTT_OnConnected(&mqttClient, mqttConnectedCb);

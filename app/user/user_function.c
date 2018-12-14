@@ -27,6 +27,7 @@ const char *setting_pwm_test = "rudder_pwm_test=";
 const char *setting_idx = "idx=";
 const char *setting_get_all = "get all setting";
 const char *setting_update = "update";
+const char *setting_mqtt_ip = "mqtt_ip=";
 const char *setting_mqtt_port = "mqtt_port=";
 const char *setting_mqtt_user = "mqtt_user=";
 const char *setting_mqtt_password = "mqtt_password=";
@@ -267,6 +268,35 @@ user_con_received(void *arg, char *pusrdata, unsigned short length) {
 				user_set_led(1);
 		}
 		os_sprintf(DeviceBuffer, "%s" "%s\n", setting_mqtt_device_id, mqtt_device_id);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	}else if (length > os_strlen(setting_mqtt_ip) && os_strncmp(pusrdata, setting_mqtt_ip, os_strlen(setting_mqtt_ip)) == 0) {
+
+		//设置mqtt ip地址,格式为"xxx.xxx.xxx.xxx",共4组数值,DeviceBuffer[0]记录当前为第几组数值,DeviceBuffer[1-4]记录值
+		k = 0;DeviceBuffer[0]=0;
+		for (i = 0; i < length - os_strlen(setting_mqtt_ip); i++) {
+			j = *(pusrdata + os_strlen(setting_mqtt_ip) + i) - 0x30;
+			if (j >= 0 && j <= 9)
+				k = k * 10 + j;
+			else if(j=='.'-0x30){
+				DeviceBuffer[0]++;
+				DeviceBuffer[DeviceBuffer[0]]=k;
+				k=0;
+			}
+			else {
+				k = -1;
+				break;
+			}
+		}
+		if (DeviceBuffer[0] == 3 && k>0) {
+			user_set_led(0);
+			user_setting_set_mqtt_ip(DeviceBuffer[1],DeviceBuffer[2],DeviceBuffer[3],k);//注意:由于不以.结尾,所以最后一个数值未保存在DeviceBuffer[4]中!
+			user_set_led(1);
+		}
+
+
+
+		os_sprintf(DeviceBuffer, "%s" "%d.%d.%d.%d\n", setting_mqtt_ip, mqtt_ip[0], mqtt_ip[1], mqtt_ip[2], mqtt_ip[3]);
 		os_printf("%s", DeviceBuffer);
 		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
 	}
