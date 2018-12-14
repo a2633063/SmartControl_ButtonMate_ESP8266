@@ -8,14 +8,14 @@
 #include "../mqtt/include/mqtt_config.h"
 
 #include "user_mqtt.h"
-
+#include "user_json.h"
 MQTT_Client mqttClient;
 
 void mqttConnectedCb(uint32_t *args)
 {
     MQTT_Client* client = (MQTT_Client*)args;
     os_printf("MQTT: Connected\r\n");
-    MQTT_Subscribe(client, "/mqtt/topic/0", 0);
+    MQTT_Subscribe(client, "domoticz/out", 0);
     MQTT_Subscribe(client, "/mqtt/topic/1", 1);
     MQTT_Subscribe(client, "/mqtt/topic/2", 2);
 

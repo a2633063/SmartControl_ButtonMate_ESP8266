@@ -6,10 +6,7 @@
 #define PWM_MAX_CYCLE	2500	//舵机信号最大值
 #define PWM_MIN_CYCLE	600	//舵机信号最小值
 
-extern uint32 pwm_middle;	//舵机中间位置
-extern uint32 pwm_max;		//舵机最大角度
-extern uint32 pwm_min;		//舵机最小角度
-extern uint32 rudder_middle_delay;		//舵机最小角度
+
 
 /*Definition of GPIO PIN params, for GPIO initialization*/
 #define PWM_0_OUT_IO_MUX PERIPHS_IO_MUX_MTCK_U

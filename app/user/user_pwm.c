@@ -6,6 +6,7 @@
 
 #include "gpio.h"
 #include "user_pwm.h"
+#include "user_setting.h"
 //#include "pwm.h"
 /*
  * SDK自带PWM，最开始时会有窄波,无法屏蔽,引起舵机抖动.
@@ -13,10 +14,7 @@
  * */
 
 #define PERIOD 20000
-uint32 pwm_middle = 1650;	//舵机中间位置
-uint32 pwm_max = 2500;		//舵机最大角度
-uint32 pwm_min = 800;		//舵机最小角度
-uint32 rudder_middle_delay = 500;		//舵机回到中间位置倒计时时间
+
 
 LOCAL uint32 duty = 2000;		//
 
