@@ -27,6 +27,10 @@ const char *setting_pwm_test = "rudder_pwm_test=";
 const char *setting_idx = "idx=";
 const char *setting_get_all = "get all setting";
 const char *setting_update = "update";
+const char *setting_mqtt_port = "mqtt_port=";
+const char *setting_mqtt_user = "mqtt_user=";
+const char *setting_mqtt_password = "mqtt_password=";
+const char *setting_mqtt_device_id = "mqtt_device_id=";
 
 void ICACHE_FLASH_ATTR
 user_con_received(void *arg, char *pusrdata, unsigned short length) {
@@ -35,7 +39,8 @@ user_con_received(void *arg, char *pusrdata, unsigned short length) {
 
 	struct espconn *pesp_conn = arg;
 
-	int i, j, k;
+	int i, j;
+	uint32_t k;
 	char DeviceBuffer[40] = { 0 };
 
 	os_sprintf(DeviceBuffer, "result:%s\n", pusrdata);
@@ -194,7 +199,6 @@ user_con_received(void *arg, char *pusrdata, unsigned short length) {
 		os_sprintf(DeviceBuffer, "%s" "%03d\n", setting_pwm_middle_delay, rudder_middle_delay);
 		os_printf("%s", DeviceBuffer);
 		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
-
 	} else if (length > os_strlen(setting_idx) && os_strncmp(pusrdata, setting_idx, os_strlen(setting_idx)) == 0) {
 		k = 0;
 		for (i = 0; i < length - os_strlen(setting_idx); i++) {
@@ -212,10 +216,59 @@ user_con_received(void *arg, char *pusrdata, unsigned short length) {
 			user_set_led(1);
 		}
 
-		os_sprintf(DeviceBuffer, "%s" "%d\n", setting_idx, k);
+		os_sprintf(DeviceBuffer, "%s" "%d\n", setting_idx, idx);
 		os_printf("%s", DeviceBuffer);
 		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	}else if (length > os_strlen(setting_mqtt_port) && os_strncmp(pusrdata, setting_mqtt_port, os_strlen(setting_mqtt_port)) == 0) {
+		k = 0;
+		for (i = 0; i < length - os_strlen(setting_mqtt_port); i++) {
+			j = *(pusrdata + os_strlen(setting_mqtt_port) + i) - 0x30;
+			if (j >= 0 && j <= 9)
+				k = k * 10 + j;
+			else {
+				k = -1;
+				break;
+			}
+		}
+		if (k >= 0) {
+			user_set_led(0);
+			user_setting_set_mqtt_port(k);
+			user_set_led(1);
+		}
 
+		os_sprintf(DeviceBuffer, "%s" "%d\n", setting_mqtt_port, mqtt_port);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	}else if (length > os_strlen(setting_mqtt_user)
+			&& os_strncmp(pusrdata, setting_mqtt_user, os_strlen(setting_mqtt_user)) == 0) {
+		if (length != os_strlen(setting_mqtt_user) && length - os_strlen(setting_mqtt_user)<32) {
+				user_set_led(0);
+				user_setting_set_mqtt_user(pusrdata + os_strlen(setting_mqtt_user));
+				user_set_led(1);
+		}
+		os_sprintf(DeviceBuffer, "%s" "%s\n", setting_mqtt_user, mqtt_user);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	}else if (length >= os_strlen(setting_mqtt_password)
+			&& os_strncmp(pusrdata, setting_mqtt_password, os_strlen(setting_mqtt_password)) == 0) {
+		if (length != os_strlen(setting_mqtt_password) && length - os_strlen(setting_mqtt_password)<32) {
+				user_set_led(0);
+				user_setting_set_mqtt_password(pusrdata + os_strlen(setting_mqtt_password));
+				user_set_led(1);
+		}
+		os_sprintf(DeviceBuffer, "%s" "%s\n", setting_mqtt_password, mqtt_password);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
+	}else if (length >= os_strlen(setting_mqtt_device_id)
+			&& os_strncmp(pusrdata, setting_mqtt_device_id, os_strlen(setting_mqtt_device_id)) == 0) {
+		if (length != os_strlen(setting_mqtt_device_id) && length - os_strlen(setting_mqtt_device_id)<32) {
+				user_set_led(0);
+				user_setting_set_mqtt_device_id(pusrdata + os_strlen(setting_mqtt_device_id));
+				user_set_led(1);
+		}
+		os_sprintf(DeviceBuffer, "%s" "%s\n", setting_mqtt_device_id, mqtt_device_id);
+		os_printf("%s", DeviceBuffer);
+		espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
 	}
 
 }
