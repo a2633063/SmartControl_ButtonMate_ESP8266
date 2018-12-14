@@ -9,10 +9,7 @@
 #include "user_setting.h"
 
 void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(u8* jsonRoot) {
-	os_printf("get freeHeap1: %d \n\n", system_get_free_heap_size());
-
-//	u8* jsonRoot =
-//			"{\"mac\":\"84:f3:eb:b3:a7:05\", \"number\":2,\"value\":{\"name\":\"xuhongv\",\"age\":18,\"blog\":\"https://blog.csdn.net/xh870189248\"},\"hexArry\":[51,15,63,22,96]}";
+	//os_printf("get freeHeap1: %d \n\n", system_get_free_heap_size());
 
 	//首先整体判断是否为一个json格式的数据
 	cJSON *pJsonRoot = cJSON_Parse(jsonRoot);
@@ -28,18 +25,18 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(u8* jsonRoot) {
 
 		//解析idx字段int内容
 		cJSON *p_idx = cJSON_GetObjectItem(pJsonRoot, "idx");
-		//判断number字段是否存在
-		if (p_idx && cJSON_IsNumber(p_idx) && p_idx->valueint==idx){
+		cJSON *p_description = cJSON_GetObjectItem(pJsonRoot, "description");
+		//
+		if (
+				(p_idx && cJSON_IsNumber(p_idx) && p_idx->valueint==idx)
+				||(p_description && cJSON_IsString(p_description) && os_strcmp(p_description->valuestring, mqtt_device_id) == 0)
+		){
 
+			os_printf("%d	%d	%s \n", p_idx->valueint,idx,p_description->valuestring);
+
+			cJSON *p_nvalue = cJSON_GetObjectItem(pJsonRoot, "nvalue");
+			if(p_nvalue) user_rudder_press(p_nvalue->valueint);
 		}
-
-
-
-
-
-
-
-
 
 
 
@@ -106,12 +103,12 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(u8* jsonRoot) {
 
 
 	} else {
-		os_printf("this is not a json data ... \n");
+		os_printf("this is not a json data:\r\n%s\r\n",jsonRoot);
 	}
 
 
 	cJSON_Delete(pJsonRoot);
-	os_printf("get freeHeap2: %d \n\n", system_get_free_heap_size());
+	//os_printf("get freeHeap2: %d \n\n", system_get_free_heap_size());
 }
 
 
