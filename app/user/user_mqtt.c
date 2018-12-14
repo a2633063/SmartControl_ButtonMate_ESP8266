@@ -53,6 +53,7 @@ void mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const cha
     dataBuf[data_len] = 0;
 
     os_printf("Receive topic: %s, data: %s \r\n", topicBuf, dataBuf);
+    user_domoticz_mqtt_analysis(dataBuf);
     os_free(topicBuf);
     os_free(dataBuf);
 }
@@ -69,9 +70,9 @@ void ICACHE_FLASH_ATTR user_mqtt_init(void) {
 
 	//MQTT≥ı ºªØ
 
-    MQTT_InitConnection(&mqttClient, "192.168.43.247", 1883, NO_TLS);
+    MQTT_InitConnection(&mqttClient, "192.168.43.247", mqtt_port, NO_TLS);
 
-    MQTT_InitClient(&mqttClient, "Device_ID", "z", "2633063", MQTT_KEEPALIVE, 1);
+    MQTT_InitClient(&mqttClient, "Device_ID", mqtt_user, mqtt_password, MQTT_KEEPALIVE, 1);
 
     MQTT_InitLWT(&mqttClient, "/lwt", "offline", 0, 0);
     MQTT_OnConnected(&mqttClient, mqttConnectedCb);

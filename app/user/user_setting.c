@@ -16,7 +16,7 @@ uint32 rudder_middle_delay = 500;		//舵机回到中间位置倒计时时间
 int32 idx = -1;	//domoticz mqtt数据 idx值
 
 
-uint16 mqtt_ip[4];	//mqtt service ip
+uint8 mqtt_ip[4];	//mqtt service ip
 uint16 mqtt_port = 0;		//mqtt service port
 uint8 mqtt_user[SETTING_MQTT_STRING_LENGTH_MAX];		//mqtt service user
 uint8 mqtt_password[SETTING_MQTT_STRING_LENGTH_MAX];		//mqtt service user
@@ -58,7 +58,7 @@ user_setting_init(void) {
 	user_setting_get_mqtt_user();
 	user_setting_get_mqtt_password();
 	user_setting_get_mqtt_device_id();
-	os_printf("MQTT Service:" IPSTR "\r\n", IP2STR(mqtt_ip));
+	os_printf("MQTT Service ip:" IPSTR "\r\n", IP2STR(mqtt_ip));
 	os_printf("MQTT Service port:%d\r\n", mqtt_port);
 	os_printf("MQTT Service user:%s\r\n", mqtt_user);
 	os_printf("MQTT Service password:%s\r\n", mqtt_password);
@@ -146,11 +146,11 @@ user_setting_get_idx(void) {
 }
 
 void ICACHE_FLASH_ATTR
-user_setting_set_mqtt_ip(uint8 * p) {
-	mqtt_ip[0] = p[0];
-	mqtt_ip[1] = p[1];
-	mqtt_ip[2] = p[2];
-	mqtt_ip[3] = p[3];
+user_setting_set_mqtt_ip(uint8 a,uint8 b,uint8 c,uint8 d) {
+	mqtt_ip[0] = a;
+	mqtt_ip[1] = b;
+	mqtt_ip[2] = c;
+	mqtt_ip[3] = d;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_IP_ADDR);
 	spi_flash_write(SETTING_SAVE_MQTT_IP_ADDR * 4096, (uint32 *) mqtt_ip, 4);
 }
@@ -158,6 +158,7 @@ user_setting_set_mqtt_ip(uint8 * p) {
 void ICACHE_FLASH_ATTR
 user_setting_get_mqtt_ip() {
 	spi_flash_read(SETTING_SAVE_MQTT_IP_ADDR * 4096, (uint32 *) mqtt_ip, 4);
+	if(mqtt_ip[0]==255)	user_setting_set_mqtt_ip(MQTT_IP_DEFAULT);
 }
 
 void ICACHE_FLASH_ATTR
@@ -173,9 +174,9 @@ uint32 ICACHE_FLASH_ATTR
 user_setting_get_mqtt_port(void) {
 	uint32 val;
 	spi_flash_read(SETTING_SAVE_MQTT_PORT_ADDR * 4096, &val, 4);
-	if (val < 1 || val > 65535)
-		mqtt_port = 1883;
 	mqtt_port = val;
+	if (val < 1 || val > 65535)
+		user_setting_set_mqtt_port(MQTT_PROT_DEFAULT);
 	return mqtt_port;
 }
 
@@ -198,7 +199,7 @@ user_setting_get_mqtt_user(void) {
 	uint32 val;
 	spi_flash_read(SETTING_SAVE_MQTT_USER_ADDR * 4096, (uint32 *) mqtt_user, SETTING_MQTT_STRING_LENGTH_MAX);
 	if (mqtt_user[0] > 0x7f)
-		user_setting_set_mqtt_user("user");
+		user_setting_set_mqtt_user(MQTT_USER_DEFAULT);
 }
 
 void ICACHE_FLASH_ATTR
@@ -220,7 +221,7 @@ user_setting_get_mqtt_password(void) {
 	uint32 val;
 	spi_flash_read(SETTING_SAVE_MQTT_PASSWORD_ADDR * 4096, (uint32 *) mqtt_password, SETTING_MQTT_STRING_LENGTH_MAX);
 	if (mqtt_password[0] > 0x7f)
-		user_setting_set_mqtt_password("123456");
+		user_setting_set_mqtt_password(MQTT_PASSWORD_DEFAULT);
 }
 
 void ICACHE_FLASH_ATTR
