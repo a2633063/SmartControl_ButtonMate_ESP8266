@@ -31,9 +31,6 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(u8* jsonRoot) {
 				(p_idx && cJSON_IsNumber(p_idx) && p_idx->valueint==idx)
 				||(p_description && cJSON_IsString(p_description) && os_strcmp(p_description->valuestring, mqtt_device_id) == 0)
 		){
-
-			os_printf("%d	%d	%s \n", p_idx->valueint,idx,p_description->valuestring);
-
 			cJSON *p_nvalue = cJSON_GetObjectItem(pJsonRoot, "nvalue");
 			if(p_nvalue) user_rudder_press(p_nvalue->valueint);
 		}
@@ -41,65 +38,65 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(u8* jsonRoot) {
 
 
 
-
-		//解析mac字段字符串内容
-		cJSON *pMacAdress = cJSON_GetObjectItem(pJsonRoot, "mac");
-		//判断mac字段是否json格式
-		if (pMacAdress) {
-			//判断mac字段是否string类型
-			if (cJSON_IsString(pMacAdress))
-				os_printf("get MacAdress:%s \n", pMacAdress->valuestring);
-
-		} else
-			os_printf("get MacAdress failed \n");
-
-
-
-		//解析number字段int内容
-		cJSON *pNumber = cJSON_GetObjectItem(pJsonRoot, "number");
-		//判断number字段是否存在
-		if (pNumber){
-			if (cJSON_IsNumber(pNumber))
-			os_printf("get Number:%d \n", pNumber->valueint);
-		}
-		else
-			os_printf("get Number failed \n");
-
-		//解析value字段内容，判断是否为json
-		cJSON *pValue = cJSON_GetObjectItem(pJsonRoot, "value");
-		if (pValue) {
-			//进一步剖析里面的name字段:注意这个根节点是 pValue
-			cJSON *pName = cJSON_GetObjectItem(pValue, "name");
-			if (pName)
-				if (cJSON_IsString(pName))
-					os_printf("get value->Name : %s \n", pName->valuestring);
-
-
-			//进一步剖析里面的age字段:注意这个根节点是 pValue
-			cJSON *pAge = cJSON_GetObjectItem(pValue, "age");
-			if (pAge)
-				if (cJSON_IsNumber(pAge))
-					os_printf("get value->Age : %d \n", pAge->valueint);
-
-
-			//进一步剖析里面的blog字段:注意这个根节点是 pValue
-			cJSON *pBlog= cJSON_GetObjectItem(pValue, "blog");
-			if (pBlog)
-				if (cJSON_IsString(pBlog))
-				os_printf("get value->pBlog	 : %s \n", pBlog->valuestring);
-		}
-
-		//剖析
-		cJSON *pArry = cJSON_GetObjectItem(pJsonRoot, "hexArry");
-		if (pArry) {
-			//获取数组长度
-			int arryLength = cJSON_GetArraySize(pArry);
-			os_printf("get arryLength : %d \n", arryLength);
-			//逐个打印
-			int i ;
-			for (i = 0; i < arryLength; i++)
-				os_printf("cJSON_GetArrayItem(pArry, %d)= %d \n",i,cJSON_GetArrayItem(pArry, i)->valueint);
-		}
+//
+//		//解析mac字段字符串内容
+//		cJSON *pMacAdress = cJSON_GetObjectItem(pJsonRoot, "mac");
+//		//判断mac字段是否json格式
+//		if (pMacAdress) {
+//			//判断mac字段是否string类型
+//			if (cJSON_IsString(pMacAdress))
+//				os_printf("get MacAdress:%s \n", pMacAdress->valuestring);
+//
+//		} else
+//			os_printf("get MacAdress failed \n");
+//
+//
+//
+//		//解析number字段int内容
+//		cJSON *pNumber = cJSON_GetObjectItem(pJsonRoot, "number");
+//		//判断number字段是否存在
+//		if (pNumber){
+//			if (cJSON_IsNumber(pNumber))
+//			os_printf("get Number:%d \n", pNumber->valueint);
+//		}
+//		else
+//			os_printf("get Number failed \n");
+//
+//		//解析value字段内容，判断是否为json
+//		cJSON *pValue = cJSON_GetObjectItem(pJsonRoot, "value");
+//		if (pValue) {
+//			//进一步剖析里面的name字段:注意这个根节点是 pValue
+//			cJSON *pName = cJSON_GetObjectItem(pValue, "name");
+//			if (pName)
+//				if (cJSON_IsString(pName))
+//					os_printf("get value->Name : %s \n", pName->valuestring);
+//
+//
+//			//进一步剖析里面的age字段:注意这个根节点是 pValue
+//			cJSON *pAge = cJSON_GetObjectItem(pValue, "age");
+//			if (pAge)
+//				if (cJSON_IsNumber(pAge))
+//					os_printf("get value->Age : %d \n", pAge->valueint);
+//
+//
+//			//进一步剖析里面的blog字段:注意这个根节点是 pValue
+//			cJSON *pBlog= cJSON_GetObjectItem(pValue, "blog");
+//			if (pBlog)
+//				if (cJSON_IsString(pBlog))
+//				os_printf("get value->pBlog	 : %s \n", pBlog->valuestring);
+//		}
+//
+//		//剖析
+//		cJSON *pArry = cJSON_GetObjectItem(pJsonRoot, "hexArry");
+//		if (pArry) {
+//			//获取数组长度
+//			int arryLength = cJSON_GetArraySize(pArry);
+//			os_printf("get arryLength : %d \n", arryLength);
+//			//逐个打印
+//			int i ;
+//			for (i = 0; i < arryLength; i++)
+//				os_printf("cJSON_GetArrayItem(pArry, %d)= %d \n",i,cJSON_GetArrayItem(pArry, i)->valueint);
+//		}
 
 
 	} else {
