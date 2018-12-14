@@ -6,6 +6,7 @@
 
 #include "espconn.h"
 
+#include "user_wifi.h"
 #include "user_function.h"
 #include "user_setting.h"
 #include "user_pwm.h"
@@ -56,7 +57,7 @@ user_con_received(void *arg, char *pusrdata, unsigned short length) {
 	os_strncmp(pusrdata, device_find_request, os_strlen(device_find_request)) == 0) {
 
 		char Device_mac_buffer[60] = { 0 };
-		char hwaddr[6];
+
 		struct ip_info ipconfig;
 
 		wifi_get_ip_info(STATION_IF, &ipconfig);

@@ -6,6 +6,7 @@
 
 #include "user_setting.h"
 #include "user_pwm.h"
+#include "user_wifi.h"
 
 uint32 pwm_middle = 1650;	//舵机中间位置
 uint32 pwm_max = 2500;		//舵机最大角度
@@ -13,7 +14,7 @@ uint32 pwm_min = 800;		//舵机最小角度
 uint32 rudder_middle_delay = 500;		//舵机回到中间位置倒计时时间
 
 int32 idx = -1;	//domoticz mqtt数据 idx值
-int32 nvalue = -1;		//domoticz nvalue数据 idx值
+
 
 uint16 mqtt_ip[4];	//mqtt service ip
 uint16 mqtt_port = 0;		//mqtt service port
@@ -48,7 +49,6 @@ user_setting_init(void) {
 	os_printf("PWM MIN:%d\r\n", pwm_min);
 	os_printf("PWM MIDDLE:%d\r\n", pwm_middle);
 	os_printf("PWM DELAY:%d\r\n", rudder_middle_delay);
-
 
 	user_setting_get_idx();
 	os_printf("Domoticz idx:%d\r\n", idx);
@@ -181,59 +181,76 @@ user_setting_get_mqtt_port(void) {
 
 void ICACHE_FLASH_ATTR
 user_setting_set_mqtt_user(uint8 * p) {
-	uint32_t length= os_strlen(p);
-	if(length>31) return;
+	uint32_t length = os_strlen(p);
+	if (length > 31)
+		return;
 
 	os_strcpy(mqtt_user, p);
-	mqtt_user[length]=0;
-	if(length%4!=0) length+=4-length%4;
+	mqtt_user[length] = 0;
+	if (length % 4 != 0)
+		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_USER_ADDR);
-	spi_flash_write(SETTING_SAVE_MQTT_USER_ADDR * 4096, (uint32 *)mqtt_user, length);
+	spi_flash_write(SETTING_SAVE_MQTT_USER_ADDR * 4096, (uint32 *) mqtt_user, length);
 }
 
 void ICACHE_FLASH_ATTR
 user_setting_get_mqtt_user(void) {
 	uint32 val;
-	spi_flash_read(SETTING_SAVE_MQTT_USER_ADDR * 4096, (uint32 *)mqtt_user, SETTING_MQTT_STRING_LENGTH_MAX);
-	if(mqtt_user[0]>0x7f) user_setting_set_mqtt_user("user");
+	spi_flash_read(SETTING_SAVE_MQTT_USER_ADDR * 4096, (uint32 *) mqtt_user, SETTING_MQTT_STRING_LENGTH_MAX);
+	if (mqtt_user[0] > 0x7f)
+		user_setting_set_mqtt_user("user");
 }
 
 void ICACHE_FLASH_ATTR
 user_setting_set_mqtt_password(uint8 * p) {
-	uint32_t length= os_strlen(p);
-	if(length>31) return;
+	uint32_t length = os_strlen(p);
+	if (length > 31)
+		return;
 
 	os_strcpy(mqtt_password, p);
-	mqtt_password[length]=0;
-	if(length%4!=0) length+=4-length%4;
+	mqtt_password[length] = 0;
+	if (length % 4 != 0)
+		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_PASSWORD_ADDR);
-	spi_flash_write(SETTING_SAVE_MQTT_PASSWORD_ADDR * 4096, (uint32 *)mqtt_password, length);
+	spi_flash_write(SETTING_SAVE_MQTT_PASSWORD_ADDR * 4096, (uint32 *) mqtt_password, length);
 }
 
 void ICACHE_FLASH_ATTR
 user_setting_get_mqtt_password(void) {
 	uint32 val;
-	spi_flash_read(SETTING_SAVE_MQTT_PASSWORD_ADDR * 4096, (uint32 *)mqtt_password, SETTING_MQTT_STRING_LENGTH_MAX);
-	if(mqtt_password[0]>0x7f) user_setting_set_mqtt_password("123456");
+	spi_flash_read(SETTING_SAVE_MQTT_PASSWORD_ADDR * 4096, (uint32 *) mqtt_password, SETTING_MQTT_STRING_LENGTH_MAX);
+	if (mqtt_password[0] > 0x7f)
+		user_setting_set_mqtt_password("123456");
 }
 
 void ICACHE_FLASH_ATTR
 user_setting_set_mqtt_device_id(uint8 * p) {
-	uint32_t length= os_strlen(p);
-	if(length>31) return;
+	uint32_t length = os_strlen(p);
+	if (length > 31)
+		return;
 
 	os_strcpy(mqtt_device_id, p);
-	mqtt_device_id[length]=0;
-	if(length%4!=0) length+=4-length%4;
+	mqtt_device_id[length] = 0;
+	if (length % 4 != 0)
+		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_DEVICE_ID_ADDR);
-	spi_flash_write(SETTING_SAVE_MQTT_DEVICE_ID_ADDR * 4096, (uint32 *)mqtt_device_id, length);
+	spi_flash_write(SETTING_SAVE_MQTT_DEVICE_ID_ADDR * 4096, (uint32 *) mqtt_device_id, length);
 }
 
 void ICACHE_FLASH_ATTR
 user_setting_get_mqtt_device_id(void) {
 	uint32 val;
-	spi_flash_read(SETTING_SAVE_MQTT_DEVICE_ID_ADDR * 4096, (uint32 *)mqtt_device_id, SETTING_MQTT_STRING_LENGTH_MAX);
-	if(mqtt_device_id[0]>0x7f) user_setting_set_mqtt_device_id("Deviced_Id");
+	spi_flash_read(SETTING_SAVE_MQTT_DEVICE_ID_ADDR * 4096, (uint32 *) mqtt_device_id, SETTING_MQTT_STRING_LENGTH_MAX);
+	if (mqtt_device_id[0] > 0x7f) {
+		if (wifi_get_macaddr(STATION_IF, hwaddr)) {
+			uint8 device_id[SETTING_MQTT_STRING_LENGTH_MAX];
+//			os_printf("device id:"SETTING_SAVE_MQTT_DEVICE_ID_NAME" \r\n", hwaddr[4],hwaddr[5]);
+			os_sprintf(device_id, SETTING_SAVE_MQTT_DEVICE_ID_NAME, hwaddr[4], hwaddr[5]);
+			user_setting_set_mqtt_device_id(device_id);
+		} else{
+			os_printf("wifi_get_macaddr error \r\n");
+			user_setting_set_mqtt_device_id("Deviced_Id");
+		}
+	}
 }
-
 

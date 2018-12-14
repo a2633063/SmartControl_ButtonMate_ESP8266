@@ -10,6 +10,7 @@
 #include "user_mqtt.h"
 #include "../include/espconn.h"
 
+char hwaddr[6];
 /*
  * wifi配置
  * 	wifi连接成功后初始化,配置SmartConfig,wifi指示灯
@@ -131,7 +132,7 @@ void ICACHE_FLASH_ATTR user_wifi_init(void) {
 	wifi_set_event_handler_cb(wifi_handle_event_cb);
 	wifi_status_led_install(GPIO_WIFI_LED_IO_NUM, GPIO_WIFI_LED_IO_MUX, GPIO_WIFI_LED_IO_FUNC);
 
-
+	wifi_get_macaddr(STATION_IF, hwaddr);
 }
 
 void ICACHE_FLASH_ATTR user_smartconfig(void) {

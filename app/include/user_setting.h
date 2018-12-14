@@ -1,13 +1,21 @@
 #ifndef __USER_SETTING_H__
 #define __USER_SETTING_H__
 
+#define	SETTING_MQTT_STRING_LENGTH_MAX  32		//必须 4 字节对齐。
+#define	SETTING_SAVE_MQTT_DEVICE_ID_NAME  "Button_%X%X"		//必须 4 字节对齐。
+
 extern uint32 pwm_middle;	//舵机中间位置
 extern uint32 pwm_max;		//舵机最大角度
 extern uint32 pwm_min;		//舵机最小角度
 extern uint32 rudder_middle_delay;		//舵机最小角度
 
 extern int32 idx;	//domoticz mqtt数据 idx值
-extern int32 nvalue;		//domoticz nvalue数据 idx值
+
+extern uint16 mqtt_ip[4];	//mqtt service ip
+extern uint16 mqtt_port;		//mqtt service port
+extern uint8 mqtt_user[SETTING_MQTT_STRING_LENGTH_MAX];		//mqtt service user
+extern uint8 mqtt_password[SETTING_MQTT_STRING_LENGTH_MAX];		//mqtt service user
+extern uint8 mqtt_device_id[SETTING_MQTT_STRING_LENGTH_MAX];		//mqtt service user
 
 #define	SETTING_SAVE_PWM_MAX_ADDR  0x80
 #define	SETTING_SAVE_PWM_MIN_ADDR	0x81
@@ -23,7 +31,6 @@ extern int32 nvalue;		//domoticz nvalue数据 idx值
 #define	SETTING_SAVE_MQTT_DEVICE_ID_ADDR  0x9a
 
 
-#define	SETTING_MQTT_STRING_LENGTH_MAX  32		//必须 4 字节对齐。
 
 void ser_setting_init(void);
 
