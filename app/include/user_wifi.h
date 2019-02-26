@@ -7,6 +7,7 @@
 #define GPIO_WIFI_LED_IO_FUNC    FUNC_GPIO2
 
 extern char hwaddr[6];
+extern char strMac[12];
 
 void user_wifi_init(void);
 void user_smartconfig(void);

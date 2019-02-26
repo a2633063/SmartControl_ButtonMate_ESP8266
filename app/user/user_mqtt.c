@@ -27,6 +27,12 @@ void mqttConnectedCb(uint32_t *args)
 
 }
 
+BOOL ICACHE_FLASH_ATTR
+user_mqtt_send( const char* topic, const char* data)
+{
+	MQTT_Publish(&mqttClient, topic, data, 6, 2, 0);
+}
+
 void mqttDisconnectedCb(uint32_t *args)
 {
     MQTT_Client* client = (MQTT_Client*)args;
@@ -53,7 +59,7 @@ void mqttDataCb(uint32_t *args, const char* topic, uint32_t topic_len, const cha
     dataBuf[data_len] = 0;
 
     //os_printf("Receive topic: %s, data: %s \r\n", topicBuf, dataBuf);
-    user_domoticz_mqtt_analysis(dataBuf);
+    user_domoticz_mqtt_analysis(NULL,dataBuf);
     os_free(topicBuf);
     os_free(dataBuf);
 }
@@ -69,12 +75,8 @@ void ICACHE_FLASH_ATTR user_mqtt_disconnect(void) {
 void ICACHE_FLASH_ATTR user_mqtt_init(void) {
 
 	//MQTT≥ı ºªØ
-	uint8_t * ip = (uint8_t*)os_zalloc(16);
-	os_memset(ip,0,16);
-	os_sprintf(ip, "%d.%d.%d.%d", mqtt_ip[0], mqtt_ip[1], mqtt_ip[2], mqtt_ip[3]);
 
-    MQTT_InitConnection(&mqttClient, ip, mqtt_port, NO_TLS);
-    os_free(ip);
+    MQTT_InitConnection(&mqttClient, mqtt_ip, mqtt_port, NO_TLS);
 
     MQTT_InitClient(&mqttClient, mqtt_device_id, mqtt_user, mqtt_password, MQTT_KEEPALIVE, 1);
 

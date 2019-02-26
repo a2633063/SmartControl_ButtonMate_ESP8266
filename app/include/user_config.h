@@ -8,6 +8,8 @@
 
 //#define LIGHT_DEVICE            0
 
+#define TYPE 0
+#define TYPE_NAME "ButtonMate"
 
 #endif
 

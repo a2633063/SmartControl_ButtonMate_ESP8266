@@ -49,10 +49,10 @@ void user_init(void) {
 #if SNTP_ENABLE
 	user_sntp_init();
 #endif
-	//UDP初始化,监听端口10191,当接收到特定字符串时,返回本设备IP及MAC地址
-	user_devicefind_init(10191);
-	//TCP初始化,监听端口10191
-	user_tcp_init(10191);
+	//UDP初始化,监听端口10182,当接收到特定字符串时,返回本设备IP及MAC地址
+	user_devicefind_init(10182);
+//	TCP初始化,监听端口10191
+//	user_tcp_init(10191);
 	//TCP初始化 80端口 webserver
 	//user_webserver_init(80);
 

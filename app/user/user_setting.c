@@ -16,7 +16,7 @@ uint32 rudder_middle_delay = 500;		//舵机回到中间位置倒计时时间
 int32 idx = -1;	//domoticz mqtt数据 idx值
 
 
-uint8 mqtt_ip[4];	//mqtt service ip
+uint8 mqtt_ip[SETTING_MQTT_STRING_LENGTH_MAX];	//mqtt service ip
 uint16 mqtt_port = 0;		//mqtt service port
 uint8 mqtt_user[SETTING_MQTT_STRING_LENGTH_MAX];		//mqtt service user
 uint8 mqtt_password[SETTING_MQTT_STRING_LENGTH_MAX];		//mqtt service user
@@ -146,18 +146,22 @@ user_setting_get_idx(void) {
 }
 
 void ICACHE_FLASH_ATTR
-user_setting_set_mqtt_ip(uint8 a,uint8 b,uint8 c,uint8 d) {
-	mqtt_ip[0] = a;
-	mqtt_ip[1] = b;
-	mqtt_ip[2] = c;
-	mqtt_ip[3] = d;
+user_setting_set_mqtt_ip(uint8 * p) {
+	uint32_t length = os_strlen(p);
+	if (length > 31)
+		return;
+
+	os_strcpy(mqtt_ip, p);
+	mqtt_ip[length] = 0;
+	if (length % 4 != 0)
+		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_IP_ADDR);
-	spi_flash_write(SETTING_SAVE_MQTT_IP_ADDR * 4096, (uint32 *) mqtt_ip, 4);
+	spi_flash_write(SETTING_SAVE_MQTT_IP_ADDR * 4096, (uint32 *) mqtt_ip, length);
 }
 
 void ICACHE_FLASH_ATTR
 user_setting_get_mqtt_ip() {
-	spi_flash_read(SETTING_SAVE_MQTT_IP_ADDR * 4096, (uint32 *) mqtt_ip, 4);
+	spi_flash_read(SETTING_SAVE_MQTT_IP_ADDR * 4096, (uint32 *) mqtt_ip, 32);
 	if(mqtt_ip[0]==255)	user_setting_set_mqtt_ip(MQTT_IP_DEFAULT);
 }
 
@@ -245,12 +249,11 @@ user_setting_get_mqtt_device_id(void) {
 	if (mqtt_device_id[0] > 0x7f) {
 		if (wifi_get_macaddr(STATION_IF, hwaddr)) {
 			uint8 device_id[SETTING_MQTT_STRING_LENGTH_MAX];
-//			os_printf("device id:"SETTING_SAVE_MQTT_DEVICE_ID_NAME" \r\n", hwaddr[4],hwaddr[5]);
 			os_sprintf(device_id, SETTING_SAVE_MQTT_DEVICE_ID_NAME, hwaddr[4], hwaddr[5]);
 			user_setting_set_mqtt_device_id(device_id);
 		} else{
 			os_printf("wifi_get_macaddr error \r\n");
-			user_setting_set_mqtt_device_id("Deviced_Id");
+			user_setting_set_mqtt_device_id("ButtonMate");
 		}
 	}
 }
