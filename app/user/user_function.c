@@ -43,7 +43,7 @@ user_con_received(void *arg, char *pusrdata, unsigned short length) {
 	int i, j;
 	uint32_t k;
 
-	os_printf("result:%s\n", pusrdata);
+//	os_printf("result:%s\n", pusrdata);
 
 	if (pesp_conn->type == ESPCONN_TCP) { //tcp
 		//espconn_sent(pesp_conn, DeviceBuffer, os_strlen(DeviceBuffer));
@@ -61,8 +61,5 @@ user_con_received(void *arg, char *pusrdata, unsigned short length) {
 
 
 	user_domoticz_mqtt_analysis(pesp_conn,pusrdata);
-
-	os_printf("user_domoticz_mqtt_analysis\r\n");
-
 
 }

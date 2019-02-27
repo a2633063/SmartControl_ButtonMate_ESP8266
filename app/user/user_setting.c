@@ -58,7 +58,7 @@ user_setting_init(void) {
 	user_setting_get_mqtt_user();
 	user_setting_get_mqtt_password();
 	user_setting_get_mqtt_device_id();
-	os_printf("MQTT Service ip:" IPSTR "\r\n", IP2STR(mqtt_ip));
+	os_printf("MQTT Service ip:%s\r\n", mqtt_ip);
 	os_printf("MQTT Service port:%d\r\n", mqtt_port);
 	os_printf("MQTT Service user:%s\r\n", mqtt_user);
 	os_printf("MQTT Service password:%s\r\n", mqtt_password);
