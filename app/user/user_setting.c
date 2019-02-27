@@ -68,6 +68,7 @@ user_setting_init(void) {
 
 void ICACHE_FLASH_ATTR
 user_setting_set_pwm_max(uint32 val) {
+	os_printf("user_setting_set_pwm_max:%d\r\n", val);
 	pwm_max = val;
 	spi_flash_erase_sector(SETTING_SAVE_PWM_MAX_ADDR);
 	spi_flash_write(SETTING_SAVE_PWM_MAX_ADDR * 4096, &pwm_max, 4);
@@ -75,6 +76,7 @@ user_setting_set_pwm_max(uint32 val) {
 
 void ICACHE_FLASH_ATTR
 user_setting_set_pwm_min(uint32 val) {
+	os_printf("user_setting_set_pwm_min:%d\r\n", val);
 	pwm_min = val;
 	spi_flash_erase_sector(SETTING_SAVE_PWM_MIN_ADDR);
 	spi_flash_write(SETTING_SAVE_PWM_MIN_ADDR * 4096, &pwm_min, 4);
@@ -82,6 +84,7 @@ user_setting_set_pwm_min(uint32 val) {
 
 void ICACHE_FLASH_ATTR
 user_setting_set_pwm_middle(uint32 val) {
+	os_printf("user_setting_set_pwm_middle:%d\r\n", val);
 	pwm_middle = val;
 	spi_flash_erase_sector(SETTING_SAVE_PWM_MIDDLE_ADDR);
 	spi_flash_write(SETTING_SAVE_PWM_MIDDLE_ADDR * 4096, &pwm_middle, 4);
@@ -89,6 +92,7 @@ user_setting_set_pwm_middle(uint32 val) {
 
 void ICACHE_FLASH_ATTR
 user_setting_set_pwm_middle_delay(uint32 val) {
+	os_printf("user_setting_set_pwm_middle_delay:%d\r\n", val);
 	rudder_middle_delay = val;
 	spi_flash_erase_sector(SETTING_SAVE_PWM_MIDDLE_DELAY_ADDR);
 	spi_flash_write(SETTING_SAVE_PWM_MIDDLE_DELAY_ADDR * 4096, &rudder_middle_delay, 4);
@@ -97,7 +101,7 @@ user_setting_set_pwm_middle_delay(uint32 val) {
 uint32 ICACHE_FLASH_ATTR
 user_setting_get_pwm_max(void) {
 	spi_flash_read(SETTING_SAVE_PWM_MAX_ADDR * 4096, &pwm_max, 4);
-	if (pwm_max > PWM_MAX_CYCLE || pwm_max < PWM_MIN_CYCLE || pwm_max < pwm_min) {
+	if (pwm_max > PWM_MAX_CYCLE || pwm_max < PWM_MIN_CYCLE ) {
 		pwm_max = PWM_MAX_CYCLE;
 	}
 	return pwm_max;
@@ -107,7 +111,7 @@ uint32 ICACHE_FLASH_ATTR
 user_setting_get_pwm_min(void) {
 	spi_flash_read(SETTING_SAVE_PWM_MIN_ADDR * 4096, &pwm_min, 4);
 
-	if (pwm_min > PWM_MAX_CYCLE || pwm_min < PWM_MIN_CYCLE || pwm_min > pwm_max) {
+	if (pwm_min > PWM_MAX_CYCLE || pwm_min < PWM_MIN_CYCLE ) {
 		pwm_min = PWM_MIN_CYCLE;
 	}
 	return pwm_min;

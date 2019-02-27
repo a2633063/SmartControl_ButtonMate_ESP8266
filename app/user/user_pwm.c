@@ -98,9 +98,9 @@ void ICACHE_FLASH_ATTR user_rudder_set_duty(uint32 val) {
 }
 
 void user_set_middle_delay(int val) {
-	rudder_middle_delay = val;
+	//rudder_middle_delay = val;
 	if (val < 0)
-		rudder_middle_delay = 0;
+		val = 0;
 	rudder_middle_delay_count = val / 20 + 1;
 }
 

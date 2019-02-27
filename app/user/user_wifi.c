@@ -35,18 +35,16 @@ LOCAL unsigned char user_smarconfig_flag = 0;	//smarconfig±êÖ¾Î»,·ÀÖ¹smarconfig³
 //}
 //wifi event »Øµ÷º¯Êý
 void wifi_handle_event_cb(System_Event_t *evt) {
+	static char flag = 0;
 	switch (evt->event) {
 	case EVENT_STAMODE_CONNECTED:
-		os_printf("wifi connect to ssid %s, channel %d\n", evt->event_info.connected.ssid,
-				evt->event_info.connected.channel);
+		os_printf("wifi connect to ssid %s, channel %d\n", evt->event_info.connected.ssid, evt->event_info.connected.channel);
 		break;
 	case EVENT_STAMODE_DISCONNECTED:
-		os_printf("wifi disconnect from ssid %s, reason %d\n", evt->event_info.disconnected.ssid,
-				evt->event_info.disconnected.reason);
+		os_printf("wifi disconnect from ssid %s, reason %d\n", evt->event_info.disconnected.ssid, evt->event_info.disconnected.reason);
 		break;
 	case EVENT_STAMODE_AUTHMODE_CHANGE:
-		os_printf("wifi change mode: %d -> %d\n", evt->event_info.auth_change.old_mode,
-				evt->event_info.auth_change.new_mode);
+		os_printf("wifi change mode: %d -> %d\n", evt->event_info.auth_change.old_mode, evt->event_info.auth_change.new_mode);
 		break;
 	case EVENT_STAMODE_GOT_IP:
 //		os_printf("wifi got ip:" IPSTR ",mask:" IPSTR ",gw:" IPSTR, IP2STR(&evt->event_info.got_ip.ip),
@@ -54,18 +52,20 @@ void wifi_handle_event_cb(System_Event_t *evt) {
 //		os_printf("\n");
 		wifi_status_led_uninstall();
 		user_set_led(1);
-		user_mqtt_connect();//Á¬½ÓMQTT·þÎñÆ÷
+		if (flag == 0) {
+			flag = 1;
+			user_mqtt_init();
+			user_mqtt_connect();	//Á¬½ÓMQTT·þÎñÆ÷
+		}
 //		user_mdns_config();
 
 		break;
 	case EVENT_SOFTAPMODE_STACONNECTED:
-		os_printf("wifi station: " MACSTR "join, AID = %d\n", MAC2STR(evt->event_info.sta_connected.mac),
-				evt->event_info.sta_connected.aid);
+		os_printf("wifi station: " MACSTR "join, AID = %d\n", MAC2STR(evt->event_info.sta_connected.mac), evt->event_info.sta_connected.aid);
 		break;
 	case EVENT_SOFTAPMODE_STADISCONNECTED:
-		os_printf("wifi station: " MACSTR "leave, AID = %d\n", MAC2STR(evt->event_info.sta_disconnected.mac),
-				evt->event_info.sta_disconnected.aid);
-		user_mqtt_disconnect();//Á¬½ÓMQTT·þÎñÆ÷
+		os_printf("wifi station: " MACSTR "leave, AID = %d\n", MAC2STR(evt->event_info.sta_disconnected.mac), evt->event_info.sta_disconnected.aid);
+		user_mqtt_disconnect();	//Á¬½ÓMQTT·þÎñÆ÷
 		break;
 	default:
 		break;
@@ -118,8 +118,6 @@ smartconfig_done(sc_status status, void *pdata) {
 
 void ICACHE_FLASH_ATTR user_wifi_init(void) {
 
-
-	user_mqtt_init();
 	//ÉèÖÃÎªstationÄ£Ê½
 	if (wifi_get_opmode() != STATION_MODE || wifi_get_opmode_default() != STATION_MODE) {
 		wifi_set_opmode(STATION_MODE);
@@ -136,6 +134,8 @@ void ICACHE_FLASH_ATTR user_wifi_init(void) {
 	wifi_get_macaddr(STATION_IF, hwaddr);
 
 	os_sprintf(strMac, "%02x%02x%02x%02x%02x%02x", MAC2STR(hwaddr));
+
+	//user_mqtt_init();
 }
 
 void ICACHE_FLASH_ATTR user_smartconfig(void) {

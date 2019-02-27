@@ -15,7 +15,6 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 
 	//首先整体判断是否为一个json格式的数据
 	cJSON *pJsonRoot = cJSON_Parse(jsonRoot);
-	os_printf("get freeHeap2: %d \n\n", system_get_free_heap_size());
 	//如果是否json格式数据
 	if (pJsonRoot != NULL) {
 
@@ -24,7 +23,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 //		os_printf("pJsonRoot: %s\r\n", s);
 //		cJSON_free((void *) s);
 
-		//解析device report
+//解析device report
 		os_printf("start json:device report\r\n");
 		cJSON *p_cmd = cJSON_GetObjectItem(pJsonRoot, "cmd");
 		if (p_cmd && cJSON_IsString(p_cmd) && os_strcmp(p_cmd->valuestring, "device report") == 0) {
@@ -50,58 +49,49 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 			} else {
 				user_mqtt_send("domoticz/in", s);
 			}
-			os_printf("get freeHeap3: %d \n\n", system_get_free_heap_size());
 			cJSON_free((void *) s);
 			cJSON_Delete(pRoot);
+//			cJSON_Delete(p_cmd);
 		}
-		os_printf("get freeHeap4: %d \n\n", system_get_free_heap_size());
-		cJSON_Delete(p_cmd);
 
 		os_printf("start json:other\r\n");
 		//解析
-		os_printf("get freeHeap5: %d \n\n", system_get_free_heap_size());
 		cJSON *p_idx = cJSON_GetObjectItem(pJsonRoot, "idx");
-		os_printf("get freeHeap6: %d \n\n", system_get_free_heap_size());
 		cJSON *p_description = cJSON_GetObjectItem(pJsonRoot, "description");
-		os_printf("get freeHeap7: %d \n\n", system_get_free_heap_size());
 		cJSON *p_name = cJSON_GetObjectItem(pJsonRoot, "name");
-		os_printf("get freeHeap8: %d \n\n", system_get_free_heap_size());
 		cJSON *p_mac = cJSON_GetObjectItem(pJsonRoot, "mac");
-		os_printf("get freeHeap9: %d \n\n", system_get_free_heap_size());
 
 		//
-		if (
-				(p_idx && cJSON_IsNumber(p_idx) && p_idx->valueint == idx) 	//idx
-				|| (p_description && cJSON_IsString(p_description) && os_strcmp(p_description->valuestring, mqtt_device_id) == 0)//name
-				|| (p_name && cJSON_IsString(p_name) && os_strcmp(p_name->valuestring, mqtt_device_id) == 0)//name
+		if ((p_idx && cJSON_IsNumber(p_idx) && p_idx->valueint == idx) 	//idx
+		|| (p_description && cJSON_IsString(p_description) && os_strcmp(p_description->valuestring, mqtt_device_id) == 0) 	//name
+				|| (p_name && cJSON_IsString(p_name) && os_strcmp(p_name->valuestring, mqtt_device_id) == 0) 	//name
 				|| (p_mac && cJSON_IsString(p_mac) && os_strcmp(p_mac->valuestring, strMac) == 0)
 
-		) {
+				) {
 			os_printf("device enter\r\n");
 			cJSON *p_nvalue = cJSON_GetObjectItem(pJsonRoot, "nvalue");
 			if (p_nvalue)
 				user_rudder_press(p_nvalue->valueint);
 
 			cJSON *p_setting = cJSON_GetObjectItem(pJsonRoot, "setting");
-			if(p_setting){
+			if (p_setting) {
 
 			}
 
 		}
-		cJSON_Delete(p_idx);
-		os_printf("get freeHeap10: %d \n\n", system_get_free_heap_size());
-		cJSON_Delete(p_description);
-		os_printf("get freeHeap11: %d \n\n", system_get_free_heap_size());
-		cJSON_Delete(p_name);
-		os_printf("get freeHeap12: %d \n\n", system_get_free_heap_size());
-		cJSON_Delete(p_mac);
-		os_printf("get freeHeap13: %d \n\n", system_get_free_heap_size());
+//		if (p_idx)
+//			cJSON_Delete(p_idx);
+//		if (p_description)
+//			cJSON_Delete(p_description);
+//		if (p_name)
+//			cJSON_Delete(p_name);
+//		if (p_mac)
+//			cJSON_Delete(p_mac);
 
 	} else {
 		os_printf("this is not a json data:\r\n%s\r\n", jsonRoot);
 	}
 
-	os_printf("get freeHeap14: %d \n\n", system_get_free_heap_size());
 	cJSON_Delete(pJsonRoot);
 	os_printf("get freeHeap5: %d \n\n", system_get_free_heap_size());
 }
