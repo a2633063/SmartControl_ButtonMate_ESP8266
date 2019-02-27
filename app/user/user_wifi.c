@@ -35,7 +35,6 @@ LOCAL unsigned char user_smarconfig_flag = 0;	//smarconfig±êÖ¾Î»,·ÀÖ¹smarconfig³
 //}
 //wifi event »Øµ÷º¯Êý
 void wifi_handle_event_cb(System_Event_t *evt) {
-	static char flag = 0;
 	switch (evt->event) {
 	case EVENT_STAMODE_CONNECTED:
 		os_printf("wifi connect to ssid %s, channel %d\n", evt->event_info.connected.ssid, evt->event_info.connected.channel);
@@ -52,11 +51,9 @@ void wifi_handle_event_cb(System_Event_t *evt) {
 //		os_printf("\n");
 		wifi_status_led_uninstall();
 		user_set_led(1);
-		if (flag == 0) {
-			flag = 1;
-			user_mqtt_init();
-			user_mqtt_connect();	//Á¬½ÓMQTT·þÎñÆ÷
-		}
+
+		user_mqtt_connect();	//Á¬½ÓMQTT·þÎñÆ÷
+
 //		user_mdns_config();
 
 		break;
@@ -135,7 +132,7 @@ void ICACHE_FLASH_ATTR user_wifi_init(void) {
 
 	os_sprintf(strMac, "%02x%02x%02x%02x%02x%02x", MAC2STR(hwaddr));
 
-	//user_mqtt_init();
+	user_mqtt_init();
 }
 
 void ICACHE_FLASH_ATTR user_smartconfig(void) {

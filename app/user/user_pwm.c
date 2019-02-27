@@ -15,11 +15,11 @@
 
 #define PERIOD 20000
 
+LOCAL uint8 last_direction = 0;
 
 LOCAL uint32 duty = 2000;		//
 
 LOCAL int rudder_middle_delay_count = 2;		//¼ÆÊý
-
 
 uint32 ICACHE_FLASH_ATTR user_pwm_get_duty(void) {
 	return duty;
@@ -107,10 +107,13 @@ void user_set_middle_delay(int val) {
 void ICACHE_FLASH_ATTR user_rudder_press(unsigned char direction) {
 
 	user_set_led(0);
-	if (direction == 0)
+	if (direction == 0) {
+		last_direction=0;
 		user_pwm_set_duty(pwm_min);
-	else
+	} else {
+		last_direction=1;
 		user_pwm_set_duty(pwm_max);
+	}
 	user_set_middle_delay(rudder_middle_delay);
 }
 void ICACHE_FLASH_ATTR user_rudder_test(uint32 val) {
@@ -125,3 +128,7 @@ void ICACHE_FLASH_ATTR user_rudder_test(uint32 val) {
 	user_set_middle_delay(1000);
 }
 
+uint8 ICACHE_FLASH_ATTR user_rudder_get_direction(void) {
+
+	return last_direction;
+}

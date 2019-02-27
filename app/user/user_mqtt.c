@@ -30,7 +30,7 @@ void mqttConnectedCb(uint32_t *args)
 BOOL ICACHE_FLASH_ATTR
 user_mqtt_send( const char* topic, const char* data)
 {
-	MQTT_Publish(&mqttClient, topic, data, 6, 2, 0);
+	MQTT_Publish(&mqttClient, topic, data, os_strlen(data), 2, 0);
 }
 
 void mqttDisconnectedCb(uint32_t *args)

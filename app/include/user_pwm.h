@@ -20,6 +20,7 @@ void user_pwm_init(void);
 void user_rudder_press(unsigned char direction);
 void user_rudder_test(uint32 direction);
 void sw_pwm_timer_cb(void);
+uint8 user_rudder_get_direction(void);
 
 #endif
 

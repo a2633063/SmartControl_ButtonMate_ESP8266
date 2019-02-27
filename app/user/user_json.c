@@ -6,14 +6,15 @@
 #include "espconn.h"
 
 #include "../cJson/cJSON.h"
+#include "user_pwm.h"
 #include "user_wifi.h"
 #include "user_json.h"
 #include "user_setting.h"
 
 void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8* jsonRoot) {
-	os_printf("get freeHeap1: %d \n\n", system_get_free_heap_size());
+//	os_printf("get freeHeap1: %d \n\n", system_get_free_heap_size());
 
-	//首先整体判断是否为一个json格式的数据
+//首先整体判断是否为一个json格式的数据
 	cJSON *pJsonRoot = cJSON_Parse(jsonRoot);
 	//如果是否json格式数据
 	if (pJsonRoot != NULL) {
@@ -65,35 +66,180 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 		if ((p_idx && cJSON_IsNumber(p_idx) && p_idx->valueint == idx) 	//idx
 		|| (p_description && cJSON_IsString(p_description) && os_strcmp(p_description->valuestring, mqtt_device_id) == 0) 	//name
 				|| (p_name && cJSON_IsString(p_name) && os_strcmp(p_name->valuestring, mqtt_device_id) == 0) 	//name
-				|| (p_mac && cJSON_IsString(p_mac) && os_strcmp(p_mac->valuestring, strMac) == 0)
-
+				|| (p_mac && cJSON_IsString(p_mac) && os_strcmp(p_mac->valuestring, strMac) == 0)	//mac
 				) {
 			os_printf("device enter\r\n");
+			cJSON *json_send = cJSON_CreateObject();
+			cJSON_AddStringToObject(json_send, "mac", strMac);
+
 			cJSON *p_nvalue = cJSON_GetObjectItem(pJsonRoot, "nvalue");
-			if (p_nvalue)
+			if (p_nvalue && cJSON_IsNumber(p_nvalue))
 				user_rudder_press(p_nvalue->valueint);
+
+			if(p_nvalue){
+				cJSON_AddNumberToObject(json_send, "nvalue", user_rudder_get_direction());
+			}
 
 			cJSON *p_setting = cJSON_GetObjectItem(pJsonRoot, "setting");
 			if (p_setting) {
+				cJSON *json_setting_send = cJSON_CreateObject();
+				//设置设备名称/deviceid
+				cJSON *p_setting_name = cJSON_GetObjectItem(p_setting, "name");
+				if (p_setting_name && cJSON_IsString(p_setting_name)) {
+					user_setting_set_mqtt_device_id(p_setting_name->valuestring);
+				}
 
+				//设置mqtt ip
+				cJSON *p_mqtt_ip = cJSON_GetObjectItem(p_setting, "mqtt_uri");
+				if (p_mqtt_ip && cJSON_IsString(p_mqtt_ip)) {
+					user_setting_set_mqtt_ip(p_mqtt_ip->valuestring);
+				}
+
+				//设置mqtt port
+				cJSON *p_mqtt_port = cJSON_GetObjectItem(p_setting, "mqtt_port");
+				if (p_mqtt_port && cJSON_IsNumber(p_mqtt_port)) {
+					user_setting_set_mqtt_port(p_mqtt_port->valueint);
+				}
+
+				//设置mqtt user
+				cJSON *p_mqtt_user = cJSON_GetObjectItem(p_setting, "mqtt_user");
+				if (p_mqtt_user && cJSON_IsString(p_mqtt_user)) {
+					user_setting_set_mqtt_user(p_mqtt_user->valuestring);
+				}
+
+				//设置mqtt password
+				cJSON *p_mqtt_password = cJSON_GetObjectItem(p_setting, "mqtt_password");
+				if (p_mqtt_password && cJSON_IsString(p_mqtt_password)) {
+					user_setting_set_mqtt_password(p_mqtt_password->valuestring);
+				}
+
+				//设置domoticz idx
+				cJSON *p_setting_idx = cJSON_GetObjectItem(p_setting, "idx");
+				if (p_setting_idx && cJSON_IsNumber(p_setting_idx)) {
+					user_setting_set_idx(p_setting_idx->valueint);
+				}
+
+				//设置设备参数
+				//设置左侧按键 最小
+				cJSON *p_setting_min = cJSON_GetObjectItem(p_setting, "min");
+				if (p_setting_min && cJSON_IsNumber(p_setting_min)) {
+					user_setting_set_pwm_min(p_setting_min->valueint);
+				}
+
+				//设置右侧按键 最大
+				cJSON *p_setting_max = cJSON_GetObjectItem(p_setting, "max");
+				if (p_setting_max && cJSON_IsNumber(p_setting_max)) {
+					user_setting_set_pwm_max(p_setting_max->valueint);
+				}
+
+				//设置平衡位置
+				cJSON *p_setting_middle = cJSON_GetObjectItem(p_setting, "middle");
+				if (p_setting_middle && cJSON_IsNumber(p_setting_middle)) {
+					user_setting_set_pwm_middle(p_setting_middle->valueint);
+				}
+				//设置平衡延时时间
+				cJSON *p_setting_middle_delay = cJSON_GetObjectItem(p_setting, "middle_delay");
+				if (p_setting_middle_delay && cJSON_IsNumber(p_setting_middle_delay)) {
+					user_setting_set_pwm_middle_delay(p_setting_middle_delay->valueint);
+				}
+
+				//测试角度
+				cJSON *p_setting_pwm_test = cJSON_GetObjectItem(p_setting, "test");
+				if (p_setting_pwm_test && cJSON_IsNumber(p_setting_pwm_test)) {
+					user_rudder_test(p_setting_pwm_test->valueint);
+				}
+
+				//开发返回数据
+				//设置设备名称/deviceid
+				if (p_setting_name) {
+					cJSON_AddStringToObject(json_setting_send, "name", mqtt_device_id);
+				}
+
+				//设置mqtt ip
+				if (p_mqtt_ip) {
+					cJSON_AddStringToObject(json_setting_send, "mqtt_uri", mqtt_ip);
+				}
+
+				//设置mqtt port
+				if (p_mqtt_port) {
+					cJSON_AddNumberToObject(json_setting_send, "mqtt_port", mqtt_port);
+				}
+
+				//设置mqtt user
+				if (p_mqtt_user) {
+					cJSON_AddStringToObject(json_setting_send, "mqtt_user", mqtt_user);
+				}
+
+				//设置mqtt password
+				if (p_mqtt_password) {
+					cJSON_AddStringToObject(json_setting_send, "mqtt_password", mqtt_password);
+				}
+
+				//设置domoticz idx
+				if (p_setting_idx) {
+					cJSON_AddNumberToObject(json_setting_send, "idx", idx);
+				}
+
+				//设置设备参数
+				//设置左侧按键 最小
+				if (p_setting_min) {
+					cJSON_AddNumberToObject(json_setting_send, "min", pwm_min);
+				}
+
+				//设置右侧按键 最大
+				if (p_setting_max) {
+					cJSON_AddNumberToObject(json_setting_send, "max", pwm_max);
+				}
+
+				//设置平衡位置
+				if (p_setting_middle) {
+					cJSON_AddNumberToObject(json_setting_send, "middle", pwm_middle);
+				}
+
+				//设置平衡延时时间
+				if (p_setting_middle_delay) {
+					cJSON_AddNumberToObject(json_setting_send, "middle_delay", rudder_middle_delay);
+				}
+
+				//测试角度
+				if (p_setting_pwm_test) {
+					cJSON_AddNumberToObject(json_setting_send, "max", pwm_max);
+				}
+
+				cJSON_AddItemToObject(json_send, "setting",json_setting_send);
 			}
 
+
+			cJSON_AddStringToObject(json_send, "name", mqtt_device_id);
+
+			if(p_idx)  cJSON_AddNumberToObject(json_send, "idx", idx);
+
+			char *json_str = cJSON_Print(json_send);
+			os_printf("pRoot: %s\r\n", json_str);
+
+			if (pesp_conn) {
+				if (pesp_conn && pesp_conn->type == ESPCONN_UDP) {
+					pesp_conn->type = ESPCONN_UDP;
+					pesp_conn->proto.udp->remote_port = 10181;	//获取端口
+					pesp_conn->proto.udp->remote_ip[0] = 255;	//获取IP地址
+					pesp_conn->proto.udp->remote_ip[1] = 255;
+					pesp_conn->proto.udp->remote_ip[2] = 255;
+					pesp_conn->proto.udp->remote_ip[3] = 255;
+				}
+				espconn_send(pesp_conn, json_str, os_strlen(json_str));	//发送数据
+			} else {
+				user_mqtt_send("domoticz/in", json_str);
+			}
+			cJSON_free((void *) json_str);
+			cJSON_Delete(json_send);
 		}
-//		if (p_idx)
-//			cJSON_Delete(p_idx);
-//		if (p_description)
-//			cJSON_Delete(p_description);
-//		if (p_name)
-//			cJSON_Delete(p_name);
-//		if (p_mac)
-//			cJSON_Delete(p_mac);
 
 	} else {
 		os_printf("this is not a json data:\r\n%s\r\n", jsonRoot);
 	}
 
 	cJSON_Delete(pJsonRoot);
-	os_printf("get freeHeap5: %d \n\n", system_get_free_heap_size());
+//	os_printf("get freeHeap2: %d \n\n", system_get_free_heap_size());
 }
 
 void creatJson() {

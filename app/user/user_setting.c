@@ -58,11 +58,11 @@ user_setting_init(void) {
 	user_setting_get_mqtt_user();
 	user_setting_get_mqtt_password();
 	user_setting_get_mqtt_device_id();
-	os_printf("MQTT Service ip:%s\r\n", mqtt_ip);
+	os_printf("MQTT Service ip:\"%s\"\r\n", mqtt_ip);
 	os_printf("MQTT Service port:%d\r\n", mqtt_port);
-	os_printf("MQTT Service user:%s\r\n", mqtt_user);
-	os_printf("MQTT Service password:%s\r\n", mqtt_password);
-	os_printf("MQTT Service device id:%s\r\n", mqtt_device_id);
+	os_printf("MQTT Service user:\"%s\"\r\n", mqtt_user);
+	os_printf("MQTT Service password:\"%s\"\r\n", mqtt_password);
+	os_printf("MQTT Service device id:\"%s\"\r\n", mqtt_device_id);
 
 }
 
@@ -154,9 +154,10 @@ user_setting_set_mqtt_ip(uint8 * p) {
 	uint32_t length = os_strlen(p);
 	if (length > 31)
 		return;
-
+	os_memset(mqtt_ip,0,SETTING_MQTT_STRING_LENGTH_MAX);
 	os_strcpy(mqtt_ip, p);
 	mqtt_ip[length] = 0;
+	length++;
 	if (length % 4 != 0)
 		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_IP_ADDR);
@@ -196,6 +197,7 @@ user_setting_set_mqtt_user(uint8 * p) {
 
 	os_strcpy(mqtt_user, p);
 	mqtt_user[length] = 0;
+	length++;
 	if (length % 4 != 0)
 		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_USER_ADDR);
@@ -218,6 +220,7 @@ user_setting_set_mqtt_password(uint8 * p) {
 
 	os_strcpy(mqtt_password, p);
 	mqtt_password[length] = 0;
+	length++;
 	if (length % 4 != 0)
 		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_PASSWORD_ADDR);
@@ -240,6 +243,7 @@ user_setting_set_mqtt_device_id(uint8 * p) {
 
 	os_strcpy(mqtt_device_id, p);
 	mqtt_device_id[length] = 0;
+	length++;
 	if (length % 4 != 0)
 		length += 4 - length % 4;
 	spi_flash_erase_sector(SETTING_SAVE_MQTT_DEVICE_ID_ADDR);
