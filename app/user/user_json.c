@@ -11,9 +11,15 @@
 #include "user_json.h"
 #include "user_setting.h"
 
+uint32 last_time = 0;
+
+void ICACHE_FLASH_ATTR user_json_set_last_time() {
+	last_time = system_get_time();
+}
+
 void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8* jsonRoot) {
 //	os_printf("get freeHeap1: %d \n\n", system_get_free_heap_size());
-
+	bool return_flag = true;	//为true时返回json结果,否则不返回
 //首先整体判断是否为一个json格式的数据
 	cJSON *pJsonRoot = cJSON_Parse(jsonRoot);
 	//如果是否json格式数据
@@ -73,12 +79,21 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 			cJSON_AddStringToObject(json_send, "mac", strMac);
 
 			cJSON *p_nvalue = cJSON_GetObjectItem(pJsonRoot, "nvalue");
-			if (p_nvalue && cJSON_IsNumber(p_nvalue))
-				user_rudder_press(p_nvalue->valueint);
-
-			if(p_nvalue){
-				cJSON_AddNumberToObject(json_send, "nvalue", user_rudder_get_direction());
+			if (p_nvalue && cJSON_IsNumber(p_nvalue)) {
+				uint32 now_time = system_get_time();
+				os_printf("system_get_time:%d,%d = %09d\r\n", last_time, now_time, now_time - last_time);
+				if (now_time - last_time < 2500000) {
+					return_flag = false;
+				} else {
+					user_rudder_press(p_nvalue->valueint);
+				}
+				user_json_set_last_time();
 			}
+
+			if (p_nvalue) {
+					cJSON_AddNumberToObject(json_send, "nvalue", user_rudder_get_direction());
+			} else
+				last_time = 0;
 
 			cJSON *p_setting = cJSON_GetObjectItem(pJsonRoot, "setting");
 			if (p_setting) {
@@ -206,31 +221,32 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 					cJSON_AddNumberToObject(json_setting_send, "max", pwm_max);
 				}
 
-				cJSON_AddItemToObject(json_send, "setting",json_setting_send);
+				cJSON_AddItemToObject(json_send, "setting", json_setting_send);
 			}
-
 
 			cJSON_AddStringToObject(json_send, "name", mqtt_device_id);
 
-			if(p_idx)  cJSON_AddNumberToObject(json_send, "idx", idx);
+			if (p_idx)
+				cJSON_AddNumberToObject(json_send, "idx", idx);
 
-			char *json_str = cJSON_Print(json_send);
-			os_printf("pRoot: %s\r\n", json_str);
-
-			if (pesp_conn) {
-				if (pesp_conn && pesp_conn->type == ESPCONN_UDP) {
-					pesp_conn->type = ESPCONN_UDP;
-					pesp_conn->proto.udp->remote_port = 10181;	//获取端口
-					pesp_conn->proto.udp->remote_ip[0] = 255;	//获取IP地址
-					pesp_conn->proto.udp->remote_ip[1] = 255;
-					pesp_conn->proto.udp->remote_ip[2] = 255;
-					pesp_conn->proto.udp->remote_ip[3] = 255;
+			if (return_flag == true) {
+				char *json_str = cJSON_Print(json_send);
+				os_printf("pRoot: %s\r\n", json_str);
+				if (pesp_conn) {
+					if (pesp_conn && pesp_conn->type == ESPCONN_UDP) {
+						pesp_conn->type = ESPCONN_UDP;
+						pesp_conn->proto.udp->remote_port = 10181;	//获取端口
+						pesp_conn->proto.udp->remote_ip[0] = 255;	//获取IP地址
+						pesp_conn->proto.udp->remote_ip[1] = 255;
+						pesp_conn->proto.udp->remote_ip[2] = 255;
+						pesp_conn->proto.udp->remote_ip[3] = 255;
+					}
+					espconn_send(pesp_conn, json_str, os_strlen(json_str));	//发送数据
+				} else {
+					user_mqtt_send("domoticz/in", json_str);
 				}
-				espconn_send(pesp_conn, json_str, os_strlen(json_str));	//发送数据
-			} else {
-				user_mqtt_send("domoticz/in", json_str);
+				cJSON_free((void *) json_str);
 			}
-			cJSON_free((void *) json_str);
 			cJSON_Delete(json_send);
 		}
 
@@ -242,7 +258,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 //	os_printf("get freeHeap2: %d \n\n", system_get_free_heap_size());
 }
 
-void creatJson() {
+void ICACHE_FLASH_ATTR creatJson() {
 
 	/*
 	 {
