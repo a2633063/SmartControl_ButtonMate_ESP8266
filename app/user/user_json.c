@@ -61,7 +61,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 //			cJSON_Delete(p_cmd);
 		}
 
-		os_printf("start json:other\r\n");
+//		os_printf("start json:other\r\n");
 		//解析
 		cJSON *p_idx = cJSON_GetObjectItem(pJsonRoot, "idx");
 		cJSON *p_description = cJSON_GetObjectItem(pJsonRoot, "description");
@@ -74,7 +74,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 				|| (p_name && cJSON_IsString(p_name) && os_strcmp(p_name->valuestring, mqtt_device_id) == 0) 	//name
 				|| (p_mac && cJSON_IsString(p_mac) && os_strcmp(p_mac->valuestring, strMac) == 0)	//mac
 				) {
-			os_printf("device enter\r\n");
+//			os_printf("device enter\r\n");
 			cJSON *json_send = cJSON_CreateObject();
 			cJSON_AddStringToObject(json_send, "mac", strMac);
 
@@ -82,7 +82,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 			if (p_nvalue && cJSON_IsNumber(p_nvalue)) {
 				uint32 now_time = system_get_time();
 				os_printf("system_get_time:%d,%d = %09d\r\n", last_time, now_time, now_time - last_time);
-				if (now_time - last_time < 2500000) {
+				if (now_time - last_time < 1500000 && p_idx && p_nvalue->valueint==user_rudder_get_direction()) {
 					return_flag = false;
 				} else {
 					user_rudder_press(p_nvalue->valueint);
@@ -162,6 +162,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 				cJSON *p_setting_pwm_test = cJSON_GetObjectItem(p_setting, "test");
 				if (p_setting_pwm_test && cJSON_IsNumber(p_setting_pwm_test)) {
 					user_rudder_test(p_setting_pwm_test->valueint);
+					cJSON_AddNumberToObject(json_setting_send, "test", p_setting_pwm_test->valueint);
 				}
 
 				//开发返回数据
@@ -216,17 +217,13 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 					cJSON_AddNumberToObject(json_setting_send, "middle_delay", rudder_middle_delay);
 				}
 
-				//测试角度
-				if (p_setting_pwm_test) {
-					cJSON_AddNumberToObject(json_setting_send, "max", pwm_max);
-				}
-
 				cJSON_AddItemToObject(json_send, "setting", json_setting_send);
 			}
 
 			cJSON_AddStringToObject(json_send, "name", mqtt_device_id);
 
-			if (p_idx)
+			//if (p_idx)
+			if(idx>=0)
 				cJSON_AddNumberToObject(json_send, "idx", idx);
 
 			if (return_flag == true) {
