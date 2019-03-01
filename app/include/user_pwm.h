@@ -9,9 +9,9 @@
 
 
 /*Definition of GPIO PIN params, for GPIO initialization*/
-#define PWM_0_OUT_IO_MUX PERIPHS_IO_MUX_MTCK_U
-#define PWM_0_OUT_IO_NUM 13
-#define PWM_0_OUT_IO_FUNC  FUNC_GPIO13
+#define PWM_0_OUT_IO_MUX PERIPHS_IO_MUX_GPIO4_U
+#define PWM_0_OUT_IO_NUM 4
+#define PWM_0_OUT_IO_FUNC  FUNC_GPIO4
 
 
 uint32 user_pwm_get_duty(void);

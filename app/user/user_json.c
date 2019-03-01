@@ -82,7 +82,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 			if (p_nvalue && cJSON_IsNumber(p_nvalue)) {
 				uint32 now_time = system_get_time();
 				os_printf("system_get_time:%d,%d = %09d\r\n", last_time, now_time, now_time - last_time);
-				if (now_time - last_time < 1500000 && p_idx && p_nvalue->valueint==user_rudder_get_direction()) {
+				if (now_time - last_time < 1500000 && p_idx && p_nvalue->valueint == user_rudder_get_direction()) {
 					return_flag = false;
 				} else {
 					user_rudder_press(p_nvalue->valueint);
@@ -91,7 +91,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 			}
 
 			if (p_nvalue) {
-					cJSON_AddNumberToObject(json_send, "nvalue", user_rudder_get_direction());
+				cJSON_AddNumberToObject(json_send, "nvalue", user_rudder_get_direction());
 			} else
 				last_time = 0;
 
@@ -138,19 +138,31 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 				//设置左侧按键 最小
 				cJSON *p_setting_min = cJSON_GetObjectItem(p_setting, "min");
 				if (p_setting_min && cJSON_IsNumber(p_setting_min)) {
-					user_setting_set_pwm_min(p_setting_min->valueint);
+					int k = p_setting_min->valueint;
+					if (k >= 0 && k <= 180) {
+						user_setting_set_pwm_min(k * 10 + k / 2 + PWM_MIN_CYCLE);
+
+					}
+
 				}
 
 				//设置右侧按键 最大
 				cJSON *p_setting_max = cJSON_GetObjectItem(p_setting, "max");
 				if (p_setting_max && cJSON_IsNumber(p_setting_max)) {
-					user_setting_set_pwm_max(p_setting_max->valueint);
+					int k = p_setting_max->valueint;
+					if (k >= 0 && k <= 180) {
+						user_setting_set_pwm_max(k * 10 + k / 2 + PWM_MIN_CYCLE);
+					}
 				}
 
 				//设置平衡位置
 				cJSON *p_setting_middle = cJSON_GetObjectItem(p_setting, "middle");
 				if (p_setting_middle && cJSON_IsNumber(p_setting_middle)) {
-					user_setting_set_pwm_middle(p_setting_middle->valueint);
+					int k = p_setting_middle->valueint;
+					if (k >= 0 && k <= 180) {
+						user_setting_set_pwm_middle(k * 10 + k / 2 + PWM_MIN_CYCLE);
+					}
+
 				}
 				//设置平衡延时时间
 				cJSON *p_setting_middle_delay = cJSON_GetObjectItem(p_setting, "middle_delay");
@@ -161,8 +173,11 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 				//测试角度
 				cJSON *p_setting_pwm_test = cJSON_GetObjectItem(p_setting, "test");
 				if (p_setting_pwm_test && cJSON_IsNumber(p_setting_pwm_test)) {
-					user_rudder_test(p_setting_pwm_test->valueint);
-					cJSON_AddNumberToObject(json_setting_send, "test", p_setting_pwm_test->valueint);
+					int k = p_setting_pwm_test->valueint;
+					if (k >= 0 && k <= 180) {
+					user_rudder_test(k * 10 + k / 2 + PWM_MIN_CYCLE);
+					cJSON_AddNumberToObject(json_setting_send, "test",k * 10 + k / 2 + PWM_MIN_CYCLE);
+					}
 				}
 
 				//开发返回数据
@@ -199,17 +214,17 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 				//设置设备参数
 				//设置左侧按键 最小
 				if (p_setting_min) {
-					cJSON_AddNumberToObject(json_setting_send, "min", pwm_min);
+					cJSON_AddNumberToObject(json_setting_send, "min", (pwm_min - PWM_MIN_CYCLE + 1) / 10.5);
 				}
 
 				//设置右侧按键 最大
 				if (p_setting_max) {
-					cJSON_AddNumberToObject(json_setting_send, "max", pwm_max);
+					cJSON_AddNumberToObject(json_setting_send, "max", (pwm_max - PWM_MIN_CYCLE + 1) / 10.5);
 				}
 
 				//设置平衡位置
 				if (p_setting_middle) {
-					cJSON_AddNumberToObject(json_setting_send, "middle", pwm_middle);
+					cJSON_AddNumberToObject(json_setting_send, "middle", (pwm_middle - PWM_MIN_CYCLE + 1) / 10.5);
 				}
 
 				//设置平衡延时时间
@@ -223,7 +238,7 @@ void ICACHE_FLASH_ATTR user_domoticz_mqtt_analysis(struct espconn *pesp_conn, u8
 			cJSON_AddStringToObject(json_send, "name", mqtt_device_id);
 
 			//if (p_idx)
-			if(idx>=0)
+			if (idx >= 0)
 				cJSON_AddNumberToObject(json_send, "idx", idx);
 
 			if (return_flag == true) {
