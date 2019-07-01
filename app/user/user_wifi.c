@@ -132,6 +132,10 @@ void ICACHE_FLASH_ATTR user_wifi_init(void) {
 
 	os_sprintf(strMac, "%02x%02x%02x%02x%02x%02x", MAC2STR(hwaddr));
 
+	char strName[32] = { 0 };
+	os_sprintf(strName, DEVICE_NAME, hwaddr[4], hwaddr[5]);
+	wifi_station_set_hostname(strName);
+
 	user_mqtt_init();
 }
 

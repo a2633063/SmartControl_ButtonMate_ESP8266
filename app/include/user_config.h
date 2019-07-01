@@ -11,5 +11,7 @@
 #define TYPE 0
 #define TYPE_NAME "ButtonMate"
 
+#define DEVICE_NAME "zButtonMate_%02X%02X"
+
 #endif
 
